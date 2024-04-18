@@ -1,3 +1,4 @@
+using ApSafeFuzz;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ApSafeFuzz.Data;
@@ -16,6 +17,10 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+LogHelper.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+var startupChecks = new StartupChecks(LogHelper.CreateLogger<StartupChecks>());
+startupChecks.IsAnsibleInstalled();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
