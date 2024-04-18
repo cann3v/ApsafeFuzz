@@ -1,3 +1,4 @@
+using ApSafeFuzz.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,5 +18,13 @@ public class ClusterController : Controller
     public IActionResult Index()
     {
         return View();
+    }
+
+    [Authorize]
+    [HttpPost]
+    public IActionResult GetCreds(ClusterConfigurationModel model)
+    {
+        _logger.LogDebug($"Provided creds: {model.Username}@{model.IpAddress} ({model.Password})");
+        return View("Index");
     }
 }
