@@ -1,5 +1,22 @@
+@model ApSafeFuzz.Models.ClusterConfigurationModel
 @{
     ViewData["Title"] = "Cluster configuration";
 }
 <h1>@ViewData["Title"]</h1>
 <p>Page for configuring your fuzzing cluster</p>
+
+<form asp-action="GetCreds" method="post">
+    <div>
+        <label for="IpAddress">IP address:</label>
+        <input type="text" id="IpAddress" name="IpAddress" asp-for="IpAddress" />
+    </div>
+    <div>
+        <label for="Username">Username:</label>
+        <input type="text" id="Username" name="Username" asp-for="Username" />
+    </div>
+    <div>
+        <label for="Password">Password:</label>
+        <input type="password" id="Password" name="Password" asp-for="Password" />
+    </div>
+    <button type="submit">Submit</button>
+</form>
