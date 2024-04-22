@@ -20,7 +20,7 @@ var app = builder.Build();
 
 LogHelper.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
 var startupChecks = new StartupChecks(LogHelper.CreateLogger<StartupChecks>());
-startupChecks.IsAnsibleInstalled();
+// startupChecks.IsAnsibleInstalled(); Ansible is not working as a control node on Windows
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
