@@ -5,6 +5,35 @@
 <h1>@ViewData["Title"]</h1>
 <p>Page for configuring your fuzzing cluster</p>
 
+@if (ViewBag.data.Count > 0)
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>IP address</th>
+            <th>Username</th>
+            <th>Password</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in ViewBag.data)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.IpAddress</td>
+                <td>@item.Username</td>
+                <td>@item.Password</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>There is no node.</p>
+}
+
 <form asp-action="GetCreds" method="post">
     <div>
         <label for="IpAddress">IP address:</label>
