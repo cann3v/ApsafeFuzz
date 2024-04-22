@@ -20,7 +20,8 @@ public class ClusterController : Controller
     [Authorize]
     public IActionResult Index()
     {
-        return View();
+        ViewBag.data = _context.ClusterConfiguration.ToList();
+        return View("Index");
     }
 
     [Authorize]
@@ -36,6 +37,7 @@ public class ClusterController : Controller
         _logger.LogDebug($"Saving creds: {model.Username}@{model.IpAddress} ({model.Password})");
         _context.ClusterConfiguration.Add(model);
         _context.SaveChanges();
+        ViewBag.data = _context.ClusterConfiguration.ToList();
         return View("Index");
     }
 }
