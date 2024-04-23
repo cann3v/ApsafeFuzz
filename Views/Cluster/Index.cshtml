@@ -10,20 +10,35 @@
     <table class="table">
         <thead>
         <tr>
+            <th>Action</th>
             <th>Id</th>
             <th>IP address</th>
             <th>Username</th>
             <th>Password</th>
+            <th>Connection Status</th>
         </tr>
         </thead>
         <tbody>
         @foreach (var item in ViewBag.data)
         {
             <tr>
+                <td>
+                    <form asp-action="Delete" asp-route-nodeId="@item.Id" method="post">
+                        <button type="submit">Delete</button>    
+                    </form>
+                </td>
                 <td>@item.Id</td>
                 <td>@item.IpAddress</td>
                 <td>@item.Username</td>
                 <td>@item.Password</td>
+                @if (@ViewBag.pingResult == "Success")
+                {
+                    <td style="color: green">@ViewBag.pingResult</td>
+                }
+                else
+                {
+                    <td style="color: red;">@ViewBag.pingResult</td>
+                }
             </tr>
         }
         </tbody>
@@ -34,18 +49,14 @@ else
     <p>There is no node.</p>
 }
 
-<form asp-action="GetCreds" method="post">
-    <div>
-        <label for="IpAddress">IP address:</label>
-        <input type="text" id="IpAddress" name="IpAddress" asp-for="IpAddress" />
-    </div>
-    <div>
-        <label for="Username">Username:</label>
-        <input type="text" id="Username" name="Username" asp-for="Username" />
-    </div>
-    <div>
-        <label for="Password">Password:</label>
-        <input type="password" id="Password" name="Password" asp-for="Password" />
-    </div>
-    <button type="submit">Submit</button>
-</form>
+<div class="wrapper">
+    <form class="form-signin" asp-action="GetCreds" method="post">
+        <h2 class="form-signin-heading">Add node</h2>
+        <input type="text" class="form-control" name="IpAddress" placeholder="Ip Address" asp-for="IpAddress" />
+        <input type="text" class="form-control" name="Username" placeholder="Username" asp-for="Username"/>
+        <input type="password" class="form-control" name="Password" placeholder="Password" asp-for="Password"/>
+        <button class="btn btn-lg btn-primary btn-block" style="margin-top: 20px" type="submit">
+            Submit
+        </button>
+    </form>
+</div>
