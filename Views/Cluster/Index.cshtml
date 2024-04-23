@@ -5,7 +5,7 @@
 <h1>@ViewData["Title"]</h1>
 <p>Page for configuring your fuzzing cluster</p>
 
-@if (ViewBag.data.Count > 0)
+@if (ViewBag.nodesData.Count > 0)
 {
     <table class="table">
         <thead>
@@ -19,7 +19,7 @@
         </tr>
         </thead>
         <tbody>
-        @foreach (var item in ViewBag.data)
+        @foreach (var item in ViewBag.nodesData)
         {
             <tr>
                 <td>
@@ -31,13 +31,13 @@
                 <td>@item.IpAddress</td>
                 <td>@item.Username</td>
                 <td>@item.Password</td>
-                @if (@ViewBag.pingResult == "Success")
+                @if (@item.ConnectionState == "Success")
                 {
-                    <td style="color: green">@ViewBag.pingResult</td>
+                    <td style="color: green">@item.ConnectionState</td>
                 }
                 else
                 {
-                    <td style="color: red;">@ViewBag.pingResult</td>
+                    <td style="color: red;">@item.ConnectionState</td>
                 }
             </tr>
         }

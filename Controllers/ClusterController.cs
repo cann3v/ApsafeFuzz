@@ -1,8 +1,11 @@
 using System.Diagnostics;
+using System.Net.Sockets;
 using ApSafeFuzz.Data;
 using ApSafeFuzz.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Renci.SshNet;
+using Renci.SshNet.Common;
 
 namespace ApSafeFuzz.Controllers;
 
@@ -17,17 +20,41 @@ public class ClusterController : Controller
         _logger = logger;
     }
     
-    // GET
     [Authorize]
     public IActionResult Index()
     {
-        ViewBag.data = _context.ClusterConfiguration.ToList();
-        
-        /*
-        PING NODES HELE
-        */
-        ViewBag.pingResult = "Success";
-        
+        List<ClusterConfigurationModel> nodes = _context.ClusterConfiguration.ToList();
+        if (nodes.Count == 0)
+        {
+            ViewBag.nodesData = new List<string>();
+            return View("Index");
+        }
+
+        foreach (ClusterConfigurationModel node in nodes)
+        {
+            string host = node.IpAddress;
+            string user = node.Username;
+            string password = node.Password;
+            _logger.LogDebug($"Pinging node {user}@{host} ({password})");
+            var sshClient = new SshClient(host, user, password);
+            try
+            {
+                sshClient.Connect();
+                node.ConnectionState = "Success";
+            }
+            catch (SshConnectionException e)
+            {
+                _logger.LogError($"SSH connection exception with {user}@{host} ({password}): {e}");
+                node.ConnectionState = "Error";
+            }
+            catch (SocketException e)
+            {
+                _logger.LogError($"Socket exception with {user}@{host} ({password}): {e}");
+                node.ConnectionState = "Error";
+            }
+        }
+
+        ViewBag.nodesData = nodes;
         return View("Index");
     }
 
@@ -44,8 +71,7 @@ public class ClusterController : Controller
         _logger.LogDebug($"Saving creds: {model.Username}@{model.IpAddress} ({model.Password})");
         _context.ClusterConfiguration.Add(model);
         _context.SaveChanges();
-        ViewBag.data = _context.ClusterConfiguration.ToList();
-        return View("Index");
+        return RedirectToAction("Index");
     }
 
     [Authorize]
