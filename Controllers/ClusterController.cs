@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ApSafeFuzz.Data;
 using ApSafeFuzz.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +22,12 @@ public class ClusterController : Controller
     public IActionResult Index()
     {
         ViewBag.data = _context.ClusterConfiguration.ToList();
+        
+        /*
+        PING NODES HELE
+        */
+        ViewBag.pingResult = "Success";
+        
         return View("Index");
     }
 
@@ -39,5 +46,23 @@ public class ClusterController : Controller
         _context.SaveChanges();
         ViewBag.data = _context.ClusterConfiguration.ToList();
         return View("Index");
+    }
+
+    [Authorize]
+    [HttpPost]
+    public IActionResult Delete(int nodeId)
+    {
+        _logger.LogInformation($"Deleting node with id {nodeId}");
+        var nodeToDelete = _context.ClusterConfiguration.Find(nodeId);
+        if (nodeToDelete == null)
+        {
+            _logger.LogError($"Node with id {nodeId} not found");
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        _context.ClusterConfiguration.Remove(nodeToDelete);
+        _context.SaveChanges();
+        _logger.LogInformation($"Node with id {nodeId} deleted");
+        return RedirectToAction("Index");
     }
 }
