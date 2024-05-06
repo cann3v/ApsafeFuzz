@@ -1,0 +1,8 @@
+@{
+    ViewData["Title"] = "Fuzzing launch";
+}
+
+<form enctype="multipart/form-data" method="post" asp-action="Upload" asp-controller="FuzzingLaunch">
+    <input type="file" name="uploadedFile" /><br/>
+    <input type="submit" value="Upload" />
+</form>

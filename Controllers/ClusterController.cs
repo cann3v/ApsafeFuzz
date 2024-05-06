@@ -4,6 +4,7 @@ using ApSafeFuzz.Data;
 using ApSafeFuzz.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Renci.SshNet;
 using Renci.SshNet.Common;
 
@@ -14,7 +15,10 @@ public class ClusterController : Controller
     private readonly ILogger<ClusterController> _logger;
     private readonly ApplicationDbContext _context;
     
-    public ClusterController(ApplicationDbContext context, ILogger<ClusterController> logger)
+    public ClusterController(
+        ApplicationDbContext context,
+        ILogger<ClusterController> logger
+        )
     {
         _context = context;
         _logger = logger;
