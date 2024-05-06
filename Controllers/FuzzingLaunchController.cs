@@ -27,7 +27,16 @@ public class FuzzingLaunchController : Controller
     
     public IActionResult Index()
     {
+        ViewBag.buildsCount = _context.UploadFileSettings.ToList().Count;
         return View();
+    }
+
+    [Authorize]
+    [HttpGet]
+    public IActionResult Upload()
+    {
+        List<UploadFileSettingsModel> buildsOptions = _context.UploadFileSettings.ToList();
+        return View("Upload", buildsOptions);
     }
     
     [Authorize]
@@ -57,6 +66,25 @@ public class FuzzingLaunchController : Controller
         _logger.LogInformation($"File saved: {filePath}");
         await _context.UploadFileSettings.AddAsync(_uploadFileSettings.Value);
         await _context.SaveChangesAsync();
+        return RedirectToAction("Index");
+    }
+
+    [Authorize]
+    [HttpPost]
+    public async Task<IActionResult> Delete(int fileId)
+    {
+        _logger.LogDebug($"Deleting file with id {fileId}");
+        UploadFileSettingsModel? fileToDelete = await _context.UploadFileSettings.FindAsync(fileId);
+        if (fileToDelete == null)
+        {
+            _logger.LogError($"File with id {fileId} not found");
+            return View("Error",
+                new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        _context.UploadFileSettings.Remove(fileToDelete);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation($"File ({fileToDelete.Id}/{fileToDelete.InternalName}) was deleted");
         return RedirectToAction("Index");
     }
 }

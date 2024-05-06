@@ -2,7 +2,4 @@
     ViewData["Title"] = "Fuzzing launch";
 }
 
-<form enctype="multipart/form-data" method="post" asp-action="Upload" asp-controller="FuzzingLaunch">
-    <input type="file" name="uploadedFile" /><br/>
-    <input type="submit" value="Upload" />
-</form>
+<p>Количество <a asp-controller="FuzzingLaunch" asp-action="Upload">загруженных</a> сборок: @ViewBag.buildsCount</p>
