@@ -21,7 +21,7 @@ public class ClusterController : Controller
     }
     
     [Authorize]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         List<ClusterConfigurationModel> nodes = _context.ClusterConfiguration.ToList();
         if (nodes.Count == 0)
@@ -39,7 +39,7 @@ public class ClusterController : Controller
             var sshClient = new SshClient(host, user, password);
             try
             {
-                sshClient.Connect();
+                await sshClient.ConnectAsync(default(CancellationToken));
                 node.ConnectionState = "Success";
             }
             catch (SshConnectionException e)
@@ -61,7 +61,7 @@ public class ClusterController : Controller
 
     [Authorize]
     [HttpPost]
-    public IActionResult GetCreds(ClusterConfigurationModel model)
+    public async Task<IActionResult> GetCreds(ClusterConfigurationModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -70,17 +70,17 @@ public class ClusterController : Controller
         }
         
         _logger.LogDebug($"Saving creds: {model.Username}@{model.IpAddress} ({model.Password})");
-        _context.ClusterConfiguration.Add(model);
-        _context.SaveChanges();
+        await _context.ClusterConfiguration.AddAsync(model);
+        await _context.SaveChangesAsync();
         return RedirectToAction("Index");
     }
 
     [Authorize]
     [HttpPost]
-    public IActionResult Delete(int nodeId)
+    public async Task<IActionResult> Delete(int nodeId)
     {
         _logger.LogInformation($"Deleting node with id {nodeId}");
-        var nodeToDelete = _context.ClusterConfiguration.Find(nodeId);
+        var nodeToDelete = await _context.ClusterConfiguration.FindAsync(nodeId);
         if (nodeToDelete == null)
         {
             _logger.LogError($"Node with id {nodeId} not found");
@@ -88,7 +88,7 @@ public class ClusterController : Controller
         }
 
         _context.ClusterConfiguration.Remove(nodeToDelete);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         _logger.LogInformation($"Node with id {nodeId} deleted");
         return RedirectToAction("Index");
     }
