@@ -52,6 +52,7 @@ public class ClusterController : Controller
                 _logger.LogError($"Socket exception with {user}@{host} ({password}): {e}");
                 node.ConnectionState = "Error";
             }
+            sshClient.Disconnect();
         }
 
         ViewBag.nodesData = nodes;
