@@ -4,6 +4,7 @@ using ApSafeFuzz.Data;
 using ApSafeFuzz.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Renci.SshNet;
 using Renci.SshNet.Common;
 
@@ -14,7 +15,10 @@ public class ClusterController : Controller
     private readonly ILogger<ClusterController> _logger;
     private readonly ApplicationDbContext _context;
     
-    public ClusterController(ApplicationDbContext context, ILogger<ClusterController> logger)
+    public ClusterController(
+        ApplicationDbContext context,
+        ILogger<ClusterController> logger
+        )
     {
         _context = context;
         _logger = logger;
@@ -79,7 +83,7 @@ public class ClusterController : Controller
     [HttpPost]
     public async Task<IActionResult> Delete(int nodeId)
     {
-        _logger.LogInformation($"Deleting node with id {nodeId}");
+        _logger.LogDebug($"Deleting node with id {nodeId}");
         var nodeToDelete = await _context.ClusterConfiguration.FindAsync(nodeId);
         if (nodeToDelete == null)
         {
@@ -89,7 +93,7 @@ public class ClusterController : Controller
 
         _context.ClusterConfiguration.Remove(nodeToDelete);
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"Node with id {nodeId} deleted");
+        _logger.LogInformation($"Node with id {nodeId} was deleted");
         return RedirectToAction("Index");
     }
 }
