@@ -82,7 +82,7 @@ public class ClusterController : Controller
     [HttpPost]
     public IActionResult Delete(int nodeId)
     {
-        _logger.LogInformation($"Deleting node with id {nodeId}");
+        _logger.LogDebug($"Deleting node with id {nodeId}");
         var nodeToDelete = _context.ClusterConfiguration.Find(nodeId);
         if (nodeToDelete == null)
         {
@@ -92,7 +92,7 @@ public class ClusterController : Controller
 
         _context.ClusterConfiguration.Remove(nodeToDelete);
         _context.SaveChanges();
-        _logger.LogInformation($"Node with id {nodeId} deleted");
+        _logger.LogInformation($"Node with id {nodeId} was deleted");
         return RedirectToAction("Index");
     }
 }
