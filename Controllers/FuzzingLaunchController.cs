@@ -48,7 +48,7 @@ public class FuzzingLaunchController : Controller
         _uploadFileSettings.Value.Owner = HttpContext.User.Identity?.Name;
         _uploadFileSettings.Value.InternalName = $"{Guid.NewGuid()}{FileHelper.GetExtension(uploadedFile.FileName)}";
         
-        var filePath = Path.Combine(_uploadFileSettings.Value.FilePath, _uploadFileSettings.Value.InternalName); // TODO: FileName INJECTION!!
+        var filePath = Path.Combine(_uploadFileSettings.Value.FilePath, _uploadFileSettings.Value.InternalName);
         _logger.LogDebug($"Saving file: {filePath}");
         await using (var stream = new FileStream(filePath, FileMode.Create))
         {
