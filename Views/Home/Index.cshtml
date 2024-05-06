@@ -10,6 +10,7 @@
 @if (User.Identity.IsAuthenticated)
 {
     <p>Configure your cluster <a asp-controller="Cluster" asp-action="Index">here</a>.</p>
+    <p>Create fuzzing task <a asp-controller="FuzzingLaunch" asp-action="Index">here</a>.</p>
 }
 else
 {
