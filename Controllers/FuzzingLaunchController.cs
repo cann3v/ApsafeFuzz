@@ -82,6 +82,30 @@ public class FuzzingLaunchController : Controller
                 new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        string filePath = Path.Combine(fileToDelete.FilePath, fileToDelete.InternalName);
+        int result = FileHelper.DeleteFile(filePath);
+        switch (result)
+        {
+            case 0:
+                _logger.LogDebug($"File ({fileToDelete.Id}/{fileToDelete.InternalName}) was deleted from disk");
+                break;
+            case 1:
+                _logger.LogWarning($"File ({fileToDelete.Id}/{fileToDelete.InternalName}) does not exist");
+                return View("Error",
+                    new ErrorViewModel
+                    {
+                        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                        ErrorMessage = "FIle does not exist"
+                    });
+            case 2:
+                _logger.LogError(
+                    $"File ({fileToDelete.Id}/{fileToDelete.InternalName}): error while deleting from disk");
+                return View("Error",
+                    new ErrorViewModel
+                    {
+                        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier, ErrorMessage = "Unknown error"
+                    });
+        }
         _context.UploadFileSettings.Remove(fileToDelete);
         await _context.SaveChangesAsync();
         _logger.LogInformation($"File ({fileToDelete.Id}/{fileToDelete.InternalName}) was deleted");
