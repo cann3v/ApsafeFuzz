@@ -14,4 +14,5 @@ public class UploadFileSettingsModel
     public DateTime UploadTime { get; set; }
     public string UploadName { get; set; }
     public string InternalName { get; set; }
+    public List<FuzzingTaskModel> FuzzingTaskModels { get; set; }
 }

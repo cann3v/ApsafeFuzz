@@ -1,5 +1,38 @@
+@model ApSafeFuzz.Models.FuzzingTaskModel
 @{
     ViewData["Title"] = "Fuzzing launch";
 }
 
-<p>Количество <a asp-controller="FuzzingLaunch" asp-action="Upload">загруженных</a> сборок: @ViewBag.buildsCount</p>
+<p>Number of <a asp-controller="FuzzingLaunch" asp-action="Upload">uploaded</a> builds: @ViewBag.buildsCount</p>
+<br/>
+<h1>Create fuzzing task</h1>
+<form asp-controller="FuzzingLaunch" asp-action="Create" method="post">
+    <input type="text" class="input-task" name="Name" placeholder="Task name" asp-for="Name" required="required"/><br/>
+    <input type="text" class="input-task" name="Description" placeholder="Description" asp-for="Description"/><br/>
+    <input type="radio" class="input-task" name="Fuzzer" id="libFuzzer" value="libFuzzer" asp-for="Fuzzer"/>
+    <label for="libFuzzer">libFuzzer</label>
+    <input type="radio" name="Fuzzer" id="AFL++" value="AFL++" asp-for="Fuzzer"/>
+    <label for="AFL++">AFL++</label><br/>
+    <input type="text" class="input-task" name="BuildId" placeholder="BuildId" asp-for="BuildId"/><br/>
+    <input type="text" class="input-task" name="Environment" placeholder="Environment" asp-for="Environment"/><br/>
+    <button class="btn btn-lg btn-primary btn-block input-task" type="submit">
+        Submit
+    </button>
+</form>
+
+@* <select id="selection"> *@
+@*     <option value="option0"></option> *@
+@*     <option value="option1">Вариант 1</option> *@
+@*     <option value="option2">Вариант 2</option> *@
+@* </select> *@
+@* *@
+@* <div id="input1" style="display: none;"> *@
+@*     <p>Input 1</p> *@
+@*     <input type="text" name="option1Field"> *@
+@* </div> *@
+@* *@
+@* <div id="input2" style="display: none;"> *@
+@*     <p>Input 2</p> *@
+@*     <input type="text" name="option2Field"> *@
+@* </div> *@
+@* <script src="js/dropdown.js"></script> *@
