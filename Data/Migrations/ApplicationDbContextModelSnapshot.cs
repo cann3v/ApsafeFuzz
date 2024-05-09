@@ -40,6 +40,39 @@ namespace ApSafeFuzz.Data.Migrations
                     b.ToTable("ClusterConfiguration");
                 });
 
+            modelBuilder.Entity("ApSafeFuzz.Models.FuzzingTaskModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BuildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CreateTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Environment")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Fuzzer")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuildId");
+
+                    b.ToTable("FuzzingTasks");
+                });
+
             modelBuilder.Entity("ApSafeFuzz.Models.UploadFileSettingsModel", b =>
                 {
                     b.Property<int>("Id")
@@ -265,6 +298,17 @@ namespace ApSafeFuzz.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ApSafeFuzz.Models.FuzzingTaskModel", b =>
+                {
+                    b.HasOne("ApSafeFuzz.Models.UploadFileSettingsModel", "UploadFileSettingsModel")
+                        .WithMany("FuzzingTaskModels")
+                        .HasForeignKey("BuildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UploadFileSettingsModel");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -314,6 +358,11 @@ namespace ApSafeFuzz.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ApSafeFuzz.Models.UploadFileSettingsModel", b =>
+                {
+                    b.Navigation("FuzzingTaskModels");
                 });
 #pragma warning restore 612, 618
         }

@@ -111,4 +111,24 @@ public class FuzzingLaunchController : Controller
         _logger.LogInformation($"File ({fileToDelete.Id}/{fileToDelete.InternalName}) was deleted");
         return RedirectToAction("Index");
     }
+
+    [Authorize]
+    [HttpPost]
+    public async Task<IActionResult> Create(FuzzingTaskModel model)
+    {
+        model.CreateTime = DateTime.Now;
+        if (model.Fuzzer == null || model.BuildId == null)
+        {
+            _logger.LogError("Received invalid model");
+            return View("Error",
+                new ErrorViewModel
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier, ErrorMessage = "Invalid model"
+                });
+        }
+
+        await _context.FuzzingTasks.AddAsync(model);
+        await _context.SaveChangesAsync();
+        return RedirectToAction("Index");
+    }
 }

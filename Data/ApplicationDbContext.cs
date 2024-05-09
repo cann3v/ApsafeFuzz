@@ -13,4 +13,5 @@ public class ApplicationDbContext : IdentityDbContext
     
     public DbSet<ClusterConfigurationModel> ClusterConfiguration { get; set; } 
     public DbSet<UploadFileSettingsModel> UploadFileSettings { get; set; }
+    public DbSet<FuzzingTaskModel> FuzzingTasks { get; set; }
 }
