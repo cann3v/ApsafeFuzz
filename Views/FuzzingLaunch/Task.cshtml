@@ -1,0 +1,28 @@
+@model FuzzingTaskModel
+@{
+ViewData["Title"] = "Task details";
+}
+
+@{
+    FuzzingTaskModel task = Model;
+    UploadFileSettingsModel file = Model.UploadFileSettingsModel;
+}
+<form asp-controller="FuzzingLaunch" asp-action="DeleteTask" asp-route-taskId="@task.Id" method="get">
+    <input type="hidden" name="taskId" value="@task.Id" />
+    <button type="submit">Delete task</button>
+</form>
+<h1>Task details</h1>
+<p><strong>Id</strong>: @task.Id</p>
+<p><strong>Name</strong>: @task.Name</p>
+<p><strong>Description</strong>: @task.Description</p>
+<p><strong>Create time</strong>: @task.CreateTime</p>
+<p><strong>Fuzzer</strong>: @task.Fuzzer</p>
+<p><strong>Environment</strong>: @task.Environment</p>
+
+<h1>Build details</h1>
+<p><strong>Id</strong>: @file.Id</p>
+<p><strong>Upload name</strong>: @file.UploadName</p>
+<p><strong>Upload time</strong>: @file.UploadTime</p>
+<p><strong>Owner</strong>: @file.Owner</p>
+<p><strong>Internal name</strong>: @file.InternalName</p>
+<p><strong>File path</strong>: @file.FilePath</p>
