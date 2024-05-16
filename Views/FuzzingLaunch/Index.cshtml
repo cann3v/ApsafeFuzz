@@ -19,6 +19,45 @@
         Submit
     </button>
 </form>
+<br/>
+
+@if (ViewBag.fuzzingTasks.Count > 0)
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Action</th>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Fuzzer</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (FuzzingTaskModel task in ViewBag.fuzzingTasks)
+        {
+            <tr>
+                <td>
+                    <form asp-controller="FuzzingLaunch" asp-action="GetTask" asp-route-taskId="@task.Id" method="get">
+                        <input type="hidden" name="taskId" value="@task.Id" />
+                        <button type="submit">View</button>
+                    </form>
+                    <form asp-controller="FuzzingLaunch" asp-action="DeleteTask" asp-route-taskId="@task.Id" method="get">
+                        <input type="hidden" name="taskId" value="@task.Id"/>
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+                <td>@task.Id</td>
+                <td>@task.Name</td>
+                <td>@task.Fuzzer</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No fuzzing tasks</p>
+}
 
 @* <select id="selection"> *@
 @*     <option value="option0"></option> *@

@@ -25,10 +25,12 @@ public class FuzzingLaunchController : Controller
         _logger = logger;
     }
     
+    [Authorize]
     public IActionResult Index()
     {
         ViewBag.buildsCount = _context.UploadFileSettings.ToList().Count;
-        return View();
+        ViewBag.fuzzingTasks = _context.FuzzingTasks.ToList();
+        return View("Index");
     }
 
     [Authorize]
@@ -70,7 +72,7 @@ public class FuzzingLaunchController : Controller
     }
 
     [Authorize]
-    [HttpPost]
+    [HttpGet]
     public async Task<IActionResult> Delete(int fileId)
     {
         _logger.LogDebug($"Deleting file with id {fileId}");
@@ -130,5 +132,41 @@ public class FuzzingLaunchController : Controller
         await _context.FuzzingTasks.AddAsync(model);
         await _context.SaveChangesAsync();
         return RedirectToAction("Index");
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> DeleteTask(int taskId)
+    {
+        _logger.LogDebug($"Deleting fuzzing task {taskId}");
+        FuzzingTaskModel? task = await _context.FuzzingTasks.FindAsync(taskId);
+        if (task == null)
+        {
+            _logger.LogError($"Task with id {taskId} not found");
+            return View("Error",
+                new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        _context.FuzzingTasks.Remove(task);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation($"Fuzzing task {taskId} was deleted");
+        return RedirectToAction("Index");
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> GetTask(int taskId)
+    {
+        FuzzingTaskModel? task = await _context.FuzzingTasks.FindAsync(taskId);
+        if (task == null)
+        {
+            _logger.LogError($"Task with id {taskId} not found");
+            return View("Error",
+                new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        await _context.UploadFileSettings.FindAsync(task.BuildId);
+
+        return View("Task", task);
     }
 }

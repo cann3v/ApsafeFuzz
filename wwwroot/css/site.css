@@ -25,6 +25,7 @@ body {
   width: 100%;
   border: none;
   margin-bottom: 40px;
+  margin-top: 40px;
 }
 .table thead th {
   font-weight: bold;
