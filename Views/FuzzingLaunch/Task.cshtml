@@ -11,9 +11,17 @@ ViewData["Title"] = "Task details";
     <input type="hidden" name="taskId" value="@task.Id" />
     <button type="submit">Delete task</button>
 </form>
+<form method="get">
+    <button type="submit">Run task</button>
+</form>
+<form method="get">
+    <button type="submit">Stop task</button>
+</form>
+
 <h1>Task details</h1>
 <p><strong>Id</strong>: @task.Id</p>
 <p><strong>Name</strong>: @task.Name</p>
+<p><strong>Status</strong>: @task.Status</p>
 <p><strong>Description</strong>: @task.Description</p>
 <p><strong>Create time</strong>: @task.CreateTime</p>
 <p><strong>Fuzzer</strong>: @task.Fuzzer</p>
