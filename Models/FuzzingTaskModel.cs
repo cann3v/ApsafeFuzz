@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -15,4 +16,5 @@ public class FuzzingTaskModel
     public UploadFileSettingsModel UploadFileSettingsModel { get; set; }
     public string? Environment { get; set; }
     public DateTime? CreateTime { get; set; }
+    public string Status { get; set; } = "created";
 }
