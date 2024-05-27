@@ -1,3 +1,4 @@
+@using System.Reflection.Metadata.Ecma335
 @model FuzzingTaskModel
 @{
 ViewData["Title"] = "Task details";
@@ -22,6 +23,12 @@ ViewData["Title"] = "Task details";
 <p><strong>Id</strong>: @task.Id</p>
 <p><strong>Name</strong>: @task.Name</p>
 <p><strong>Status</strong>: @task.Status</p>
+@{
+    if (task.PID != null)
+    {
+        <p><strong>PID</strong>: @task.PID</p>
+    }
+}
 <p><strong>Description</strong>: @task.Description</p>
 <p><strong>Create time</strong>: @task.CreateTime</p>
 <p><strong>Fuzzer</strong>: @task.Fuzzer</p>
