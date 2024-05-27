@@ -2,6 +2,14 @@ namespace ApSafeFuzz.Utilities;
 
 public static class FileHelper
 {
+    /// <summary>
+    /// Метод для вычленения расширения файла
+    /// </summary>
+    /// <param name="fileName">Имя файла</param>
+    /// <returns>
+    /// Расширение файла (с точкой)
+    /// </returns>
+    /// <example>При <c>fileName="example.py"</c> вернёт <c>.py</c></example>
     public static string GetExtension(string fileName)
     {
         ArgumentNullException.ThrowIfNull(fileName);
