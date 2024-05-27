@@ -13,15 +13,18 @@ public class FuzzingLaunchController : Controller
     private readonly ApplicationDbContext _context;
     private readonly ILogger<FuzzingLaunchController> _logger;
     private readonly IOptions<UploadFileSettingsModel> _uploadFileSettings;
+    private readonly IConfiguration _configuration;
     private const long MaxFileSize = 10L * 1024L * 1024L * 1024L;
 
     public FuzzingLaunchController(
         ApplicationDbContext context,
         IOptions<UploadFileSettingsModel> uploadFileSettings,
+        IConfiguration configuration,
         ILogger<FuzzingLaunchController> logger)
     {
         _context = context;
         _uploadFileSettings = uploadFileSettings;
+        _configuration = configuration;
         _logger = logger;
     }
     
@@ -190,7 +193,17 @@ public class FuzzingLaunchController : Controller
     [HttpGet]
     public async Task<IActionResult> RunTask(int taskId, int[] selectedNodes)
     {
-        _logger.LogDebug($"Selected nodes: {selectedNodes}");
+        if (selectedNodes.Length == 0)
+        {
+            _logger.LogError("No one node was selected");
+            return View("Error",
+                new ErrorViewModel
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                    ErrorMessage = "No one node was selected"
+                });   
+        }
+        
         FuzzingTaskModel? task = await _context.FuzzingTasks.FindAsync(taskId);
         if (task == null)
         {
@@ -202,14 +215,59 @@ public class FuzzingLaunchController : Controller
                     ErrorMessage = "Task with this id not found"
                 });
         }
-
         await _context.UploadFileSettings.FindAsync((task.BuildId));
         
-        // SSH Magic
+        // Here starts SSH magic
         ILogger staticLogger = LogHelper.CreateStaticLogger("SSHExecutor");
-        ClusterConfigurationModel? node = await _context.ClusterConfiguration.FindAsync(16);
-        SSHExecutor.PingNode(node, staticLogger);
-
+        
+        // All selected nodes
+        List<ClusterConfigurationModel> nodes = _context.ClusterConfiguration
+            .Where(c => selectedNodes.Contains(c.Id))
+            .ToList();
+        foreach (ClusterConfigurationModel node in nodes)
+        {
+            // Check connection
+            bool isAvailable = await SSHExecutor.PingNode(node, staticLogger);
+            if (!isAvailable)
+            {
+                _logger.LogError($"Selected node unavailable: {node.IpAddress}");
+                return View("Error",
+                    new ErrorViewModel
+                    {
+                        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                        ErrorMessage = "Selected node unavailable"
+                    });
+            }
+            
+            // mkdirs
+            bool isDirsCreated;
+            if (task.Fuzzer == "AFL++")
+            {
+                isDirsCreated =
+                    await SSHExecutor.CreateDirectoriesAFL(node, task.Id, _configuration["NFSRoot"], staticLogger);
+            }
+            else if (task.Fuzzer == "libFuzzer")
+            {
+                isDirsCreated =
+                    await SSHExecutor.CreateDirectoriesLibFuzzer(node, task.Id, _configuration["NFSRoot"],
+                        staticLogger);
+            }
+            else
+            {
+                isDirsCreated = false;
+            }
+            if (!isDirsCreated)
+            { 
+                _logger.LogError($"Can not create directory for task {taskId}");
+                return View("Error",
+                    new ErrorViewModel
+                    {
+                        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                        ErrorMessage = "Can not create directories"
+                    });
+            }
+        }
+        
         return RedirectToAction("GetTask", new { taskId = taskId });
     }
 }
