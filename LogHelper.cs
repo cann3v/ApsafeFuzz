@@ -8,4 +8,9 @@ public static class LogHelper
     {
         return LoggerFactory.CreateLogger<T>();
     }
+
+    public static ILogger CreateStaticLogger(string category)
+    {
+        return LoggerFactory.CreateLogger(category);
+    }
 }
