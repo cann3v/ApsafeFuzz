@@ -12,7 +12,13 @@ ViewData["Title"] = "Task details";
     <input type="hidden" name="taskId" value="@task.Id" />
     <button type="submit">Delete task</button>
 </form>
-<form method="get">
+<form asp-controller="FuzzingLaunch" asp-action="RunTask" asp-route-taskId="@task.Id" method="get">
+    <input type="hidden" name="taskId" value="@task.Id" />
+    @foreach (ClusterConfigurationModel node in ViewBag.nodes)
+    {
+        <input type="checkbox" name="selectedNodes" value="@node.Id"/>
+        <label>@node.IpAddress</label>
+    }
     <button type="submit">Run task</button>
 </form>
 <form method="get">

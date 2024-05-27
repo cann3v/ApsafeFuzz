@@ -162,11 +162,54 @@ public class FuzzingLaunchController : Controller
         {
             _logger.LogError($"Task with id {taskId} not found");
             return View("Error",
-                new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+                new ErrorViewModel
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                    ErrorMessage = "Task with this id not found"
+                });
         }
 
         await _context.UploadFileSettings.FindAsync(task.BuildId);
 
+        // Add nodes to ViewBag
+        List<ClusterConfigurationModel> nodes = _context.ClusterConfiguration.ToList();
+        if (nodes.Count == 0)
+        {
+            return View("Error",
+                new ErrorViewModel
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier, ErrorMessage = "There are no nodes"
+                });
+        }
+        ViewBag.nodes = nodes;
+
         return View("Task", task);
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> RunTask(int taskId, int[] selectedNodes)
+    {
+        _logger.LogDebug($"Selected nodes: {selectedNodes}");
+        FuzzingTaskModel? task = await _context.FuzzingTasks.FindAsync(taskId);
+        if (task == null)
+        {
+            _logger.LogError($"Task with id {taskId} not found");
+            return View("Error",
+                new ErrorViewModel
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                    ErrorMessage = "Task with this id not found"
+                });
+        }
+
+        await _context.UploadFileSettings.FindAsync((task.BuildId));
+        
+        // SSH Magic
+        ILogger staticLogger = LogHelper.CreateStaticLogger("SSHExecutor");
+        ClusterConfigurationModel? node = await _context.ClusterConfiguration.FindAsync(16);
+        SSHExecutor.PingNode(node, staticLogger);
+
+        return RedirectToAction("GetTask", new { taskId = taskId });
     }
 }
