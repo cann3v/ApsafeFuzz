@@ -147,4 +147,75 @@ public static class SSHExecutor
             return false;
         }
     }
+
+    public static async Task<bool> CopyBuildToTaskDir(
+        ClusterConfigurationModel node,
+        FuzzingTaskModel task,
+        string rootPath,
+        string fuzzer,
+        ILogger logger)
+    {
+        string host = node.IpAddress;
+        string user = node.Username;
+        string password = node.Password;
+
+        string src = Path.Combine(
+            $"{task.UploadFileSettingsModel.FilePath}",
+            $"{task.UploadFileSettingsModel.InternalName}");
+        string dst = Path.Combine(
+            rootPath,
+            $"task{task.Id}-{fuzzer}/",
+            task.UploadFileSettingsModel.InternalName);
+        logger.LogDebug($"Copy build {src} to {dst}");
+        var scpClient = new ScpClient(host, user, password);
+        await scpClient.ConnectAsync(default(CancellationToken));
+        scpClient.Upload(new FileInfo(src), dst);
+        scpClient.Disconnect();
+        
+        // Check build on remote
+        var sshClient = new SshClient(host, user, password);
+        await sshClient.ConnectAsync(default(CancellationToken));
+        string cmd = $"ls -l {dst}";
+        SshCommand command= sshClient.RunCommand(cmd);
+        if (command.ExitStatus == 0)
+        {
+            logger.LogDebug("File successfully uploaded");
+            return true;
+        }
+        else
+        {
+            logger.LogError($"Can not access uploaded file: {command.Result}");
+            return false;
+        }
+    }
+
+    public static async Task<bool> DeleteTask(
+        ClusterConfigurationModel node,
+        FuzzingTaskModel task,
+        string rootPath,
+        string fuzzer,
+        ILogger logger)
+    {
+        string host = node.IpAddress;
+        string user = node.Username;
+        string password = node.Password;
+        string dst = Path.Combine(
+            rootPath,
+            $"task{task.Id}-{fuzzer}/");
+        
+        var sshClient = new SshClient(host, user, password);
+        await sshClient.ConnectAsync(default(CancellationToken));
+        string cmd = $"rm -rf {dst}";
+        SshCommand command= sshClient.RunCommand(cmd);
+        if (command.ExitStatus == 0)
+        {
+            logger.LogDebug("Task successfully deleted");
+            return true;
+        }
+        else
+        {
+            logger.LogError($"Can not delete task: {command.Result}");
+            return false;
+        }
+    }
 }

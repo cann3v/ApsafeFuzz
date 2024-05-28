@@ -150,6 +150,24 @@ public class FuzzingLaunchController : Controller
                 new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        await _context.UploadFileSettings.FindAsync(task.BuildId);
+        ClusterConfigurationModel node = _context.ClusterConfiguration.ToList()[0];
+        ILogger staticLogger = LogHelper.CreateStaticLogger("SSHExecutor");
+        bool result = false;
+        if (task.Fuzzer == "AFL++")
+        {
+            result = await SSHExecutor.DeleteTask(node, task, _configuration["NFSROOT"], "afl", staticLogger);
+        }
+        else if (task.Fuzzer == "libFuzzer")
+        {
+            result = await SSHExecutor.DeleteTask(node, task, _configuration["NFSROOT"], "libfuzzer", staticLogger);
+        }
+
+        if (!result)
+        {
+            _logger.LogWarning("Can not delete task from storage");
+        }
+
         _context.FuzzingTasks.Remove(task);
         await _context.SaveChangesAsync();
         _logger.LogInformation($"Fuzzing task {taskId} was deleted");
@@ -265,6 +283,16 @@ public class FuzzingLaunchController : Controller
                         RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
                         ErrorMessage = "Can not create directories"
                     });
+            }
+            
+            // scp
+            if (task.Fuzzer == "AFL++")
+            {
+                SSHExecutor.CopyBuildToTaskDir(node, task, _configuration["NFSRoot"], "afl", staticLogger);
+            }
+            else if (task.Fuzzer == "libFuzzer")
+            {
+                SSHExecutor.CopyBuildToTaskDir(node, task, _configuration["NFSRoot"], "libfuzzer", staticLogger);
             }
         }
         
