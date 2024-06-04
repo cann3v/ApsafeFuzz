@@ -1,10 +1,34 @@
-@model ApSafeFuzz.Models.ClusterConfigurationModel
+@model ApSafeFuzz.Models.SharedStorageModel
 @{
     ViewData["Title"] = "Cluster configuration";
 }
-<h1>@ViewData["Title"]</h1>
-<p>Page for configuring your fuzzing cluster</p>
+<div style="margin-bottom: 50px">
+    <h1>@ViewData["Title"]</h1>
+    <p>Page for configuring your fuzzing cluster</p>
+</div>
 
+<h2>Shared storage configuration</h2>
+<form asp-controller="Cluster" asp-action="SaveSharedStorage" method="post">
+    <div class="form-group" style="margin-bottom: 50px">
+        @{
+            if (Model.LastState == true)
+            {
+                <p>Last connection state: <span style="color: green">success</span></p>
+            }
+            else
+            {
+                <p>Last connection state: <span style="color: red">failed</span></p>
+            }
+        }
+        <p>To check connection click @Html.ActionLink("HERE", "CheckConnection", "Cluster")</p>
+        <input type="text" name="IpAddress" id="IpAddress" placeholder="@Model.IpAddress" asp-for="IpAddress"/><br/>
+        <input type="text" name="Username" id="Username" placeholder="@Model.Username" asp-for="Username"/><br/>
+        <input type="text" name="Password" id="Password" placeholder="@Model.Password" asp-for="Password"/><br/>
+        <button type="submit">Save</button>
+    </div>
+</form>
+
+<h2>Fuzzing nodes</h2>
 @if (ViewBag.nodesData.Count > 0)
 {
     <table class="table">
@@ -49,13 +73,13 @@ else
     <p>There is no node.</p>
 }
 
-<div class="wrapper">
-    <form class="form-signin" asp-action="GetCreds" method="post">
-        <h2 class="form-signin-heading">Add node</h2>
-        <input type="text" class="form-control" name="IpAddress" placeholder="Ip Address" asp-for="IpAddress" />
-        <input type="text" class="form-control" name="Username" placeholder="Username" asp-for="Username"/>
-        <input type="password" class="form-control" name="Password" placeholder="Password" asp-for="Password"/>
-        <button class="btn btn-lg btn-primary btn-block" style="margin-top: 20px" type="submit">
+<h2>Add fuzzing node</h2>
+<div>
+    <form asp-action="GetCreds" method="post">
+        <input type="text" name="IpAddress" placeholder="Ip Address" asp-for="IpAddress" /><br/>
+        <input type="text" name="Username" placeholder="Username" asp-for="Username"/><br/>
+        <input type="password"  name="Password" placeholder="Password" asp-for="Password"/><br/>
+        <button type="submit">
             Submit
         </button>
     </form>

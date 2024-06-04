@@ -72,7 +72,8 @@ public static class SSHExecutor
         string cmd =
             $"mkdir {Path.Combine(rootPath, $"task{taskId}-afl/")} " +
             $"&& mkdir {Path.Combine(rootPath, $"task{taskId}-afl/", "in")} " +
-            $"&& mkdir {Path.Combine(rootPath, $"task{taskId}-afl/", $"out")}";
+            $"&& mkdir {Path.Combine(rootPath, $"task{taskId}-afl/", $"out")} " +
+            $"&& echo AAAAA > {Path.Combine(rootPath, $"task{taskId}-afl/", "in/", "1.txt")}";
         logger.LogDebug($"Executing command on {node.IpAddress}: {cmd}");
         SshCommand command = sshClient.RunCommand(cmd);
         
@@ -175,7 +176,7 @@ public static class SSHExecutor
         // Check build on remote
         var sshClient = new SshClient(host, user, password);
         await sshClient.ConnectAsync(default(CancellationToken));
-        string cmd = $"ls -l {dst}";
+        string cmd = $"chmod +x {dst} && ls -l {dst}";
         SshCommand command= sshClient.RunCommand(cmd);
         if (command.ExitStatus == 0)
         {
@@ -185,6 +186,7 @@ public static class SSHExecutor
         else
         {
             logger.LogError($"Can not access uploaded file: {command.Result}");
+            logger.LogError($"Command: {command.CommandText}");
             return false;
         }
     }
@@ -217,5 +219,50 @@ public static class SSHExecutor
             logger.LogError($"Can not delete task: {command.Result}");
             return false;
         }
+    }
+
+    public static async Task<int> RunTaskAFL(
+        ClusterConfigurationModel node,
+        FuzzingTaskModel task,
+        string rootPath,
+        ILogger logger)
+    {
+        string host = node.IpAddress;
+        string user = node.Username;
+        string password = node.Password;
+        string taskPath = Path.Combine(rootPath, $"task{task.Id}-afl/");
+        string buildPath = Path.Combine(rootPath, $"task{task.Id}-afl/", task.UploadFileSettingsModel.InternalName);
+        string inPath = Path.Combine(rootPath, $"task{task.Id}-afl/", "in/");
+        string outPath = Path.Combine(rootPath, $"task{task.Id}-afl/", "out/");
+        string pidPath = Path.Combine(taskPath, "fuzz.pid");
+        string fuzzCmd = $"afl-fuzz -i {inPath} -o {outPath} -M node{node.Id} -b 0 -- {buildPath}";
+        string runCmd = $"nohup {fuzzCmd} > /dev/null 2>&1 & echo $! > {pidPath}";
+        int pid = -1;
+        
+        logger.LogDebug($"Connecting to node {user}@{host}");
+        
+        var sshClient = new SshClient(host, user, password);
+        await sshClient.ConnectAsync(default(CancellationToken));
+        logger.LogDebug($"Command to execute: {runCmd}");
+        SshCommand command = sshClient.RunCommand(runCmd);
+        
+        // Get PID
+        command = sshClient.RunCommand($"cat {pidPath}");
+        pid = Int32.Parse(command.Result);
+        
+        sshClient.Disconnect();
+        
+        return pid;
+    }
+
+    public static async Task<bool> TaskInit(
+        ClusterConfigurationModel node,
+        FuzzingTaskModel task,
+        string rootPath,
+        ILogger logger)
+    {
+        
+        
+        return true;
     }
 }
