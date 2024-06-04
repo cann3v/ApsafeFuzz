@@ -17,5 +17,5 @@ public class FuzzingTaskModel
     public string? Environment { get; set; }
     public DateTime? CreateTime { get; set; }
     public string Status { get; set; } = "created";
-    public int? PID { get; set; }
+    public int[]? PID { get; set; }
 }
