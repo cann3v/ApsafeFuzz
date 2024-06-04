@@ -294,7 +294,7 @@ public class FuzzingLaunchController : Controller
         {
             try
             {
-                int pid = await SSHExecutor.RunTaskAFL(node, task, _configuration["NFSROOT"], staticLogger);
+                int pid = await SSHExecutor.RunTask(node, task, _configuration["NFSROOT"], staticLogger);
                 task.Status = "running";
                 task.PID[nodes.IndexOf(node)] = pid;
                 await _context.SaveChangesAsync();
