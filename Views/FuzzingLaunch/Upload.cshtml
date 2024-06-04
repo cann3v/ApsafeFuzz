@@ -25,8 +25,9 @@
         {
             <tr>
                 <td>
-                    <form asp-controller="FuzzingLaunch" asp-action="Delete" asp-route-fileId="@item.Id" method="post">
-                        <button type="submit">Delete</button>    
+                    <form asp-controller="FuzzingLaunch" asp-action="Delete" asp-route-fileId="@item.Id" method="get">
+                        <input type="hidden" name="fileId" value="@item.Id"/>
+                        <button type="submit">Delete</button>
                     </form>
                 </td>
                 <td>@item.Id</td>
