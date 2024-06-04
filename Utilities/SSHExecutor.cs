@@ -236,12 +236,21 @@ public static class SSHExecutor
         }
     }
 
-    public static async Task<int> RunTaskAFL(
+    public static async Task<int> RunTask(
         ClusterConfigurationModel node,
         FuzzingTaskModel task,
         string rootPath,
         ILogger logger)
     {
+        string taskPath;
+        string buildPath;
+        string inPath;
+        string outPath;
+        string pidPath;
+        string fuzzCmd;
+        string runCmd;
+        
+        
         // Check node availability
         HostModel host = new HostModel()
         {
@@ -259,13 +268,37 @@ public static class SSHExecutor
         string ip = node.IpAddress;
         string user = node.Username;
         string password = node.Password;
-        string taskPath = Path.Combine(rootPath, $"task{task.Id}-afl/");
-        string buildPath = Path.Combine(rootPath, $"task{task.Id}-afl/", task.UploadFileSettingsModel.InternalName);
-        string inPath = Path.Combine(rootPath, $"task{task.Id}-afl/", "in/");
-        string outPath = Path.Combine(rootPath, $"task{task.Id}-afl/", "out/");
-        string pidPath = Path.Combine(taskPath, "fuzz.pid");
-        string fuzzCmd = $"afl-fuzz -i {inPath} -o {outPath} -M node{node.Id} -b 0 -- {buildPath}";
-        string runCmd = $"nohup {fuzzCmd} > /dev/null 2>&1 & echo $! > {pidPath}";
+
+        if (task.Fuzzer == "AFL++")
+        {
+            taskPath = Path.Combine(rootPath, $"task{task.Id}-afl/");
+            buildPath = Path.Combine(rootPath, $"task{task.Id}-afl/", task.UploadFileSettingsModel.InternalName);
+            inPath = Path.Combine(rootPath, $"task{task.Id}-afl/", "in/");
+            outPath = Path.Combine(rootPath, $"task{task.Id}-afl/", "out/");
+            pidPath = Path.Combine(taskPath, "fuzz.pid");
+            fuzzCmd = $"afl-fuzz -i {inPath} -o {outPath} -M node{node.Id} -b 0 -- {buildPath}";
+            runCmd = $"nohup {fuzzCmd} > /dev/null 2>&1 & echo $! > {pidPath}";
+        }
+        else if (task.Fuzzer == "libFuzzer")
+        {
+            taskPath = Path.Combine(rootPath, $"task{task.Id}-libfuzzer/");
+            buildPath = Path.Combine(rootPath, $"task{task.Id}-libfuzzer/", task.UploadFileSettingsModel.InternalName);
+            inPath = Path.Combine(rootPath, $"task{task.Id}-libfuzzer/", "in/");
+            outPath = Path.Combine(rootPath, $"task{task.Id}-libfuzzer/", "output.log");
+            pidPath = Path.Combine(taskPath, "fuzz.pid");
+            fuzzCmd = $"{buildPath} {inPath}";
+            runCmd = $"nohup {fuzzCmd} > {outPath} 2>&1 & echo $! > {pidPath}";
+        }
+        else
+        {
+            taskPath = Path.Combine(rootPath, $"task{task.Id}-afl/");
+            buildPath = Path.Combine(rootPath, $"task{task.Id}-afl/", task.UploadFileSettingsModel.InternalName);
+            inPath = Path.Combine(rootPath, $"task{task.Id}-afl/", "in/");
+            outPath = Path.Combine(rootPath, $"task{task.Id}-afl/", "out/");
+            pidPath = Path.Combine(taskPath, "fuzz.pid");
+            fuzzCmd = $"afl-fuzz -i {inPath} -o {outPath} -M node{node.Id} -b 0 -- {buildPath}";
+            runCmd = $"nohup {fuzzCmd} > /dev/null 2>&1 & echo $! > {pidPath}";
+        }
         
         logger.LogDebug($"Connecting to node {user}@{ip}");
         
