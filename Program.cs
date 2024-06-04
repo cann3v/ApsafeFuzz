@@ -19,6 +19,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.Configure<UploadFileSettingsModel>(
     builder.Configuration.GetSection(UploadFileSettingsModel.UploadFile));
 
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 LogHelper.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
@@ -29,6 +31,8 @@ var startupChecks = new StartupChecks(LogHelper.CreateLogger<StartupChecks>());
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 else
 {
