@@ -181,7 +181,10 @@ public class FuzzingLaunchController : Controller
     [HttpGet]
     public async Task<IActionResult> DeleteTask(int taskId)
     {
+        ILogger staticLogger = LogHelper.CreateStaticLogger("SSHExecutor");
         _logger.LogDebug($"Deleting fuzzing task {taskId}");
+        
+        // Select task from DB
         FuzzingTaskModel? task = await _context.FuzzingTasks.FindAsync(taskId);
         if (task == null)
         {
@@ -190,27 +193,46 @@ public class FuzzingLaunchController : Controller
                 new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        await _context.UploadFileSettings.FindAsync(task.BuildId);
-        ClusterConfigurationModel node = _context.ClusterConfiguration.ToList()[0];
-        ILogger staticLogger = LogHelper.CreateStaticLogger("SSHExecutor");
-        bool result = false;
-        if (task.Fuzzer == "AFL++")
-        {
-            result = await SSHExecutor.DeleteTask(node, task, _configuration["NFSROOT"], "afl", staticLogger);
-        }
-        else if (task.Fuzzer == "libFuzzer")
-        {
-            result = await SSHExecutor.DeleteTask(node, task, _configuration["NFSROOT"], "libfuzzer", staticLogger);
-        }
-
+        // Get shared storage creds
+        SharedStorageModel storage = await _context.SharedStorage.FirstAsync();
+        
+        // Delete task from storage
+        bool result = await SSHExecutor.DeleteTask(storage, task, _configuration["NFSROOT"], staticLogger);
         if (!result)
         {
-            _logger.LogWarning("Can not delete task from storage");
+            return View(
+                "Error",
+                new ErrorViewModel()
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                    ErrorMessage = "Can not delete task from storage"
+                });
         }
-
-        _context.FuzzingTasks.Remove(task);
+        
+        // Delete task from DB
+        _context.Remove(task);
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"Fuzzing task {taskId} was deleted");
+        
+        // ClusterConfigurationModel node = _context.ClusterConfiguration.ToList()[0];
+        // ILogger staticLogger = LogHelper.CreateStaticLogger("SSHExecutor");
+        // bool result = false;
+        // if (task.Fuzzer == "AFL++")
+        // {
+        //     result = await SSHExecutor.DeleteTask(node, task, _configuration["NFSROOT"], "afl", staticLogger);
+        // }
+        // else if (task.Fuzzer == "libFuzzer")
+        // {
+        //     result = await SSHExecutor.DeleteTask(node, task, _configuration["NFSROOT"], "libfuzzer", staticLogger);
+        // }
+        //
+        // if (!result)
+        // {
+        //     _logger.LogWarning("Can not delete task from storage");
+        // }
+        //
+        // _context.FuzzingTasks.Remove(task);
+        // await _context.SaveChangesAsync();
+        // _logger.LogInformation($"Fuzzing task {taskId} was deleted");
         return RedirectToAction("Index");
     }
 
@@ -218,6 +240,7 @@ public class FuzzingLaunchController : Controller
     [HttpGet]
     public async Task<IActionResult> GetTask(int taskId)
     {
+        // Select task from DB
         FuzzingTaskModel? task = await _context.FuzzingTasks.FindAsync(taskId);
         if (task == null)
         {
@@ -230,6 +253,7 @@ public class FuzzingLaunchController : Controller
                 });
         }
 
+        // Resolve associated build
         await _context.UploadFileSettings.FindAsync(task.BuildId);
 
         // Add nodes to ViewBag

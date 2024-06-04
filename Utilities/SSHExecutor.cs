@@ -206,23 +206,35 @@ public static class SSHExecutor
         }
     }
 
-    public static async Task<bool> DeleteTask(
-        ClusterConfigurationModel node,
+    public static async Task<bool> DeleteTask(SharedStorageModel storage,
         FuzzingTaskModel task,
         string rootPath,
-        string fuzzer,
         ILogger logger)
     {
-        string host = node.IpAddress;
-        string user = node.Username;
-        string password = node.Password;
-        string dst = Path.Combine(
-            rootPath,
-            $"task{task.Id}-{fuzzer}/");
+        string ip = storage.IpAddress;
+        string user = storage.Username;
+        string password = storage.Password;
+        string dst;
+        string cmd;
+
+        if (task.Fuzzer == "AFL++")
+        {
+            dst = Path.Combine(rootPath, $"task{task.Id}-afl/");
+        }
+        else if (task.Fuzzer == "libFuzzer")
+        {
+            dst = Path.Combine(rootPath, $"task{task.Id}-libfuzzer/");
+        }
+        else
+        {
+            dst = Path.Combine(rootPath, $"task{task.Id}-*/");
+        }
+
+        cmd = $"rm -rf {dst}";
         
-        var sshClient = new SshClient(host, user, password);
+        var sshClient = new SshClient(ip, user, password);
         await sshClient.ConnectAsync(default(CancellationToken));
-        string cmd = $"rm -rf {dst}";
+        logger.LogDebug($"Executing command: {cmd}");
         SshCommand command= sshClient.RunCommand(cmd);
         if (command.ExitStatus == 0)
         {
