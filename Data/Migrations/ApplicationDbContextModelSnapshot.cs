@@ -27,12 +27,15 @@ namespace ApSafeFuzz.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IpAddress")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Password")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Username")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -78,6 +81,29 @@ namespace ApSafeFuzz.Data.Migrations
                     b.HasIndex("BuildId");
 
                     b.ToTable("FuzzingTasks");
+                });
+
+            modelBuilder.Entity("ApSafeFuzz.Models.SharedStorageModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("LastState")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SharedStorage");
                 });
 
             modelBuilder.Entity("ApSafeFuzz.Models.UploadFileSettingsModel", b =>
