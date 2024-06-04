@@ -32,7 +32,7 @@ ViewData["Title"] = "Task details";
 @{
     if (task.PID != null)
     {
-        <p><strong>PID</strong>: @task.PID</p>
+        <p><strong>PID</strong>: @String.Join(", ", task.PID)</p>
     }
 }
 <p><strong>Description</strong>: @task.Description</p>

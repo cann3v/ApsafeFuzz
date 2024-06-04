@@ -69,8 +69,8 @@ namespace ApSafeFuzz.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("PID")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("PID")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -90,15 +90,18 @@ namespace ApSafeFuzz.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("IpAddress")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool?>("LastState")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Password")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Username")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

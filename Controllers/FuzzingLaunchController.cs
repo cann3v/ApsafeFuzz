@@ -4,7 +4,10 @@ using ApSafeFuzz.Models;
 using ApSafeFuzz.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Renci.SshNet.Common;
 
 namespace ApSafeFuzz.Controllers;
 
@@ -122,18 +125,55 @@ public class FuzzingLaunchController : Controller
     public async Task<IActionResult> Create(FuzzingTaskModel model)
     {
         model.CreateTime = DateTime.Now;
-        if (model.Fuzzer == null || model.BuildId == null)
+        try
         {
-            _logger.LogError("Received invalid model");
-            return View("Error",
-                new ErrorViewModel
+            if (!model.Fuzzer.IsNullOrEmpty())
+            {
+                // Add task to DB
+                await _context.FuzzingTasks.AddAsync(model);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Task added to DB");
+                
+                // Get shared storage creds
+                SharedStorageModel storage = await _context.SharedStorage.FirstAsync();
+                _logger.LogDebug("Shared storage creds is received");
+                
+                // Init task on shared storage
+                ILogger staticLogger = LogHelper.CreateStaticLogger("SSHExecutor");
+                await _context.UploadFileSettings.FindAsync(model.BuildId);
+                _logger.LogInformation("Initializing a task...");
+                bool result = await SSHExecutor.TaskInit(
+                    new HostModel()
+                    {
+                        IpAddress = storage.IpAddress,
+                        Password = storage.Password,
+                        Username = storage.Username
+                    },
+                    model,
+                    _configuration["NFSROOT"],
+                    staticLogger);
+                if (!result)
                 {
-                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier, ErrorMessage = "Invalid model"
+                    throw new SshException("Can not init task on shared storage");
+                }
+                _logger.LogInformation("Task initialized");
+            }
+            else
+            {
+                throw new DbUpdateException("Invalid model");
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message);
+            return View("Error",
+                new ErrorViewModel()
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                    ErrorMessage = e.Message
                 });
         }
-
-        await _context.FuzzingTasks.AddAsync(model);
-        await _context.SaveChangesAsync();
+        
         return RedirectToAction("Index");
     }
 
@@ -211,6 +251,7 @@ public class FuzzingLaunchController : Controller
     [HttpGet]
     public async Task<IActionResult> RunTask(int taskId, int[] selectedNodes)
     {
+        // Check nodes count
         if (selectedNodes.Length == 0)
         {
             _logger.LogError("No one node was selected");
@@ -222,6 +263,7 @@ public class FuzzingLaunchController : Controller
                 });   
         }
         
+        // Check task existing
         FuzzingTaskModel? task = await _context.FuzzingTasks.FindAsync(taskId);
         if (task == null)
         {
@@ -235,67 +277,41 @@ public class FuzzingLaunchController : Controller
         }
         await _context.UploadFileSettings.FindAsync((task.BuildId));
         
-        // Here starts SSH magic
+        //
+        // Here startsSSH magic
+        //
         ILogger staticLogger = LogHelper.CreateStaticLogger("SSHExecutor");
         
         // All selected nodes
         List<ClusterConfigurationModel> nodes = _context.ClusterConfiguration
             .Where(c => selectedNodes.Contains(c.Id))
             .ToList();
+        
+        // Initialize PID array
+        task.PID = new int[nodes.Count()];
+
         foreach (ClusterConfigurationModel node in nodes)
         {
-            // Check connection
-            bool isAvailable = await SSHExecutor.PingNode(node, staticLogger);
-            if (!isAvailable)
+            try
             {
-                _logger.LogError($"Selected node unavailable: {node.IpAddress}");
-                return View("Error",
-                    new ErrorViewModel
+                int pid = await SSHExecutor.RunTaskAFL(node, task, _configuration["NFSROOT"], staticLogger);
+                task.Status = "running";
+                task.PID[nodes.IndexOf(node)] = pid;
+                await _context.SaveChangesAsync();
+                
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message);
+                return View(
+                    "Error",
+                    new ErrorViewModel()
                     {
                         RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
-                        ErrorMessage = "Selected node unavailable"
+                        ErrorMessage = e.Message
                     });
-            }
-            
-            // mkdirs
-            bool isDirsCreated;
-            if (task.Fuzzer == "AFL++")
-            {
-                isDirsCreated =
-                    await SSHExecutor.CreateDirectoriesAFL(node, task.Id, _configuration["NFSRoot"], staticLogger);
-            }
-            else if (task.Fuzzer == "libFuzzer")
-            {
-                isDirsCreated =
-                    await SSHExecutor.CreateDirectoriesLibFuzzer(node, task.Id, _configuration["NFSRoot"],
-                        staticLogger);
-            }
-            else
-            {
-                isDirsCreated = false;
-            }
-            if (!isDirsCreated)
-            { 
-                _logger.LogError($"Can not create directory for task {taskId}");
-                return View("Error",
-                    new ErrorViewModel
-                    {
-                        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
-                        ErrorMessage = "Can not create directories"
-                    });
-            }
-            
-            // scp
-            if (task.Fuzzer == "AFL++")
-            {
-                SSHExecutor.CopyBuildToTaskDir(node, task, _configuration["NFSRoot"], "afl", staticLogger);
-            }
-            else if (task.Fuzzer == "libFuzzer")
-            {
-                SSHExecutor.CopyBuildToTaskDir(node, task, _configuration["NFSRoot"], "libfuzzer", staticLogger);
             }
         }
-        
         return RedirectToAction("GetTask", new { taskId = taskId });
     }
 }

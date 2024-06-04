@@ -5,7 +5,6 @@ using ApSafeFuzz.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ApSafeFuzz.Utilities;
 using Renci.SshNet;
 using Renci.SshNet.Common;
 
@@ -149,9 +148,10 @@ public class ClusterController : Controller
         else
         {
             ILogger staticLogger = LogHelper.CreateStaticLogger("SSHExecutor");
-            bool result = await SSHExecutor.PingNode(new ClusterConfigurationModel()
+            bool result = await SSHExecutor.PingNode(new HostModel()
             {
-                ConnectionState = null, Id = -1, IpAddress = storage.IpAddress, Password = storage.Password,
+                IpAddress = storage.IpAddress,
+                Password = storage.Password,
                 Username = storage.Username
             }, staticLogger);
             storage.LastState = result;
